@@ -48,10 +48,7 @@ class KucoinV2:
             STRING-TO-SIGN = 1547015186532POST/api/v1/deposit-addresses{"currency":"BTC"}
             KC-API-SIGN = 7QP/oM0ykidMdrfNEUmng8eZjg/ZvPafjIqmxiVfYu4=
         """
-        body_str = ''
-        if any(body):
-            body_str = json.dumps(body, sort_keys=True, separators=(',',':'))
-        strForSign = nonce + method.upper() + endpoint + body_str
+        strForSign = nonce + method.upper() + endpoint + body
         return base64.b64encode(hmac.new(self.SECRET.encode(), strForSign.encode(), hashlib.sha256).digest()).decode()
 
     def trading_api_request(self, method, endpoint, body={}):
@@ -68,14 +65,19 @@ class KucoinV2:
             nonce = str(int(time.time()*1000))
             request_url = self.BASE_URL + endpoint
             
-            signature = self.trading_api_sign(method, endpoint, body, nonce)
+            body_str = ''
+            if any(body):
+                body_str = json.dumps(body, sort_keys=True, separators=(',',':'))
+            
+            signature = self.trading_api_sign(method, endpoint, body_str, nonce)
 
             request = {}
             if method == 'get':
                 request['params'] = body
             else:
-                request['data'] = body
+                request['data'] = body_str
             request['headers'] =   {
+                                        'Content-Type': 'application/json',
                                         "KC-API-KEY": self.APIKEY,
                                         "KC-API-TIMESTAMP": nonce,
                                         "KC-API-PASSPHRASE": self.PASSPHRASE,
