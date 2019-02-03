@@ -32,11 +32,11 @@ class KucoinV2:
 
     def trading_api_sign(self, method, endpoint, body, nonce):
         """
-            curl -H "Content-Type:application/json" 
-                 -H "KC-API-KEY:5c2db93503aa674c74a31734" 
-                 -H "KC-API-TIMESTAMP:1547015186532" 
-                 -H "KC-API-PASSPHRASE:Abc123456" 
-                 -H "KC-API-SIGN:7QP/oM0ykidMdrfNEUmng8eZjg/ZvPafjIqmxiVfYu4=" 
+            curl -H "Content-Type:application/json"
+                 -H "KC-API-KEY:5c2db93503aa674c74a31734"
+                 -H "KC-API-TIMESTAMP:1547015186532"
+                 -H "KC-API-PASSPHRASE:Abc123456"
+                 -H "KC-API-SIGN:7QP/oM0ykidMdrfNEUmng8eZjg/ZvPafjIqmxiVfYu4="
                  -X POST -d '{"currency":"BTC"}' http://openapi-v2.kucoin.com/api/v1/deposit-addresses
 
             KC-API-KEY = 5c2db93503aa674c74a31734
@@ -64,11 +64,11 @@ class KucoinV2:
         try:
             nonce = str(int(time.time()*1000))
             request_url = self.BASE_URL + endpoint
-            
+
             body_str = ''
             if any(body):
                 body_str = json.dumps(body, sort_keys=True, separators=(',',':'))
-            
+
             signature = self.trading_api_sign(method, endpoint, body_str, nonce)
 
             request = {}
@@ -82,10 +82,10 @@ class KucoinV2:
                                         "KC-API-TIMESTAMP": nonce,
                                         "KC-API-PASSPHRASE": self.PASSPHRASE,
                                         "KC-API-SIGN": signature
-                                    }            
+                                    }
             #getattr(requests,method)(request_url, **request).json()
             result = getattr(requests,method)(request_url, **request).json()
-            
+
             if result.get('code', None) == '200000':
                 return result['data']
             else:
@@ -99,6 +99,18 @@ class KucoinV2:
     ########################################
     ### Exchange specific public methods ###
     ########################################
+
+    def get_market_list(self):
+        """
+            Get base currencies.
+            GET /api/v1/markets
+            [
+                "BTC",
+                "ETH",
+                "USDT"
+            ]
+        """
+        return self.get_request('/api/v1/markets')
 
     def get_symbols(self):
         """
@@ -130,10 +142,10 @@ class KucoinV2:
               'baseCurrency': 'ETH'}]
         """
         return self.get_request('/api/v1/symbols')
-    
+
     def get_ticker(self, symbol):
         """
-            Ticker include only the inside (i.e. best) bid and ask data , last 
+            Ticker include only the inside (i.e. best) bid and ask data , last
             price and last trade size.
             GET /api/v1/market/orderbook/level1?symbol=<symbol>
             {'sequence': '1547728715485',
@@ -145,15 +157,15 @@ class KucoinV2:
              'bestAskSize': '2.05255'}
         """
         return self.get_request('/api/v1/market/orderbook/level1?symbol=' + symbol)
-    
+
     def get_part_order_book_agg(self, symbol):
         """
             Get a list of open orders for a symbol.
-            Level-2 order book includes all bids and asks (aggregated by price), 
-            this level return only one size for each active price (as if there 
-            was only a single order for that size at the level). This API will 
-            return a part of Order Book within 100 depth for each side(ask or bid).            
-            It is recommended to use in most cases, it is the fastest Order 
+            Level-2 order book includes all bids and asks (aggregated by price),
+            this level return only one size for each active price (as if there
+            was only a single order for that size at the level). This API will
+            return a part of Order Book within 100 depth for each side(ask or bid).
+            It is recommended to use in most cases, it is the fastest Order
             Book API, and reduces traffic usage.
             GET /api/v1/market/orderbook/level2_100?symbol=<symbol>
             {'sequence': '1547728715649',
@@ -170,15 +182,15 @@ class KucoinV2:
               ['0.000106', '0.00999']]}
         """
         return self.get_request('/api/v1/market/orderbook/level2_100?symbol=' + symbol)
-    
+
     def get_full_order_book_agg(self, symbol):
         """
             Get a list of open orders for a symbol.
-            Level-2 order book includes all bids and asks (aggregated by price), 
-            this level return only one size for each active price (as if there 
-            was only a single order for that size at the level). This API will 
-            return data with full depth. It is generally used by professional 
-            traders because it uses more server resources and traffic, and we 
+            Level-2 order book includes all bids and asks (aggregated by price),
+            this level return only one size for each active price (as if there
+            was only a single order for that size at the level). This API will
+            return data with full depth. It is generally used by professional
+            traders because it uses more server resources and traffic, and we
             have strict access frequency control.
             GET /api/v1/market/orderbook/level2?symbol=<symbol>
             {'sequence': '1547728716185',
@@ -193,14 +205,14 @@ class KucoinV2:
              'bids': [['0.00011', '16.60746'], ['0.000107', '0.00999']]}
         """
         return self.get_request('/api/v1/market/orderbook/level2?symbol=' + symbol)
-    
+
     def get_full_order_book_atomic(self, symbol):
         """
-            Get a list of open orders for a symbol. Level-3 order book includes 
-            all bids and asks (non-aggregated, each item in Level-3 means a 
-            single order). Level 3 is non-aggregated and returns the entire 
-            order book. This API is generally used by professional traders 
-            because it uses more server resources and traffic, and we have 
+            Get a list of open orders for a symbol. Level-3 order book includes
+            all bids and asks (non-aggregated, each item in Level-3 means a
+            single order). Level 3 is non-aggregated and returns the entire
+            order book. This API is generally used by professional traders
+            because it uses more server resources and traffic, and we have
             strict access frequency control.
             GET /api/v1/market/orderbook/level3?symbol=<symbol>
             {'sequence': '1547728716310',
@@ -220,7 +232,7 @@ class KucoinV2:
               ['5c43275fef83c766e42729cf', '0.000107', '0.00999']]}
         """
         return self.get_request('/api/v1/market/orderbook/level3?symbol=' + symbol)
-    
+
     def get_trade_histories(self, symbol):
         """
             List the latest trades for a symbol.
@@ -252,25 +264,25 @@ class KucoinV2:
               'time': 1547923497366885430}]]
         """
         return self.get_request('/api/v1/market/histories?symbol=' + symbol)
-    
+
     def get_historic_rates(self, symbol, startAt, endAt, pattern_type='5min'):
         """
-            Historic rates for a symbol. Rates are returned in grouped buckets 
+            Historic rates for a symbol. Rates are returned in grouped buckets
             based on requested type.
-            
+
             startAt  - Start time, unix timestamp calculated in seconds not millisecond
             endAt    - End time, unix timestamp calculated in seconds not millisecond
             type     - Type of candlestick patterns
             DETAILS
-            For each query, the system would return at most 1500 pieces of data. 
+            For each query, the system would return at most 1500 pieces of data.
             To obtain more data, please page the data by time.
-            
+
             The type field must be one of the following values: {"1min","3min",
-                "5min","15min","30min","1hour","2hour","4hour","6hour","8hour", 
+                "5min","15min","30min","1hour","2hour","4hour","6hour","8hour",
                 "12hour", "1day","1week"}.
-            
+
             The json data format is as shown below.
-            
+
             [
               [
                   "1545904980",             //Start time of the candle cycle
@@ -293,24 +305,24 @@ class KucoinV2:
             ]
             RESPONSE ITEMS
             Each bucket is an array of the following information:
-            
+
             time bucket start time
             open opening price (first trade) in the bucket interval
             close closing price (last trade) in the bucket interval
             high highest price during the bucket interval
             low lowest price during the bucket interval
             volume volume of trading activity during the bucket interval
-            turnover Turnover of a period of time. The turnover is the sum of 
-            the transaction volumes of all orders 
+            turnover Turnover of a period of time. The turnover is the sum of
+            the transaction volumes of all orders
             (Turnover of each order=price*quantity).
             GET /api/v1/market/candles?symbol=<symbol>
 
         """
         return self.get_request('/api/v1/market/candles?symbol={0}&begin={1}&end={2}&type={3}'.format(symbol, startAt, endAt, pattern_type))
-    
+
     def get_24hr_stats(self, symbol):
         """
-            Get 24 hr stats for the symbol. volume is in base currency units. 
+            Get 24 hr stats for the symbol. volume is in base currency units.
             open, high, low are in quote currency units.
             GET /api/v1/market/stats
             {'symbol': 'KCS-BTC',
@@ -322,7 +334,7 @@ class KucoinV2:
              'volValue': '2.95767623942'}
         """
         return self.get_request('/api/v1/market/stats/' + symbol)
-    
+
     def get_currencies(self):
         """
             List known currencies.
@@ -333,7 +345,7 @@ class KucoinV2:
              {'precision': 8, 'name': 'USDT', 'fullName': 'USDT', 'currency': 'USDT'}]
         """
         return self.get_request('/api/v1/currencies')
-    
+
     def get_currency_detail(self, currency):
         """
             Get single currency detail
@@ -348,7 +360,7 @@ class KucoinV2:
              'isDepositEnabled': False}
         """
         return self.get_request('/api/v1/currencies/' + currency)
-    
+
     def get_time(self):
         """
             Get the API server time.
@@ -356,11 +368,11 @@ class KucoinV2:
             1547924920579
         """
         return self.get_request('/api/v1/timestamp')
-    
+
     #########################################
     ### Exchange specific private methods ###
     #########################################
-    
+
     def get_accounts(self, currency = None, account_type = None):
         """
             Get a list of accounts.
@@ -392,17 +404,17 @@ class KucoinV2:
         if request != '':
             request = '?' + request
         return self.trading_api_request('get', '/api/v1/accounts' + request)
-    
+
     def get_account(self, accountId):
         """
             Information for a single account. Use this endpoint when you know the accountId.
             GET /api/v1/accounts/<accountId>
-            {'balance': '0.1', 
-             'available': '0.1', 
-             'holds': '0', 
+            {'balance': '0.1',
+             'available': '0.1',
+             'holds': '0',
              'currency': 'BTC'}
         """
-        return self.trading_api_request('get', '/api/v1/accounts/' + accountId) 
+        return self.trading_api_request('get', '/api/v1/accounts/' + accountId)
 
     def create_account(self, account_type, currency):
         """
@@ -413,12 +425,12 @@ class KucoinV2:
         return self.trading_api_request('post', '/api/v1/accounts', {
                     'type': account_type,
                     'currency': currency
-                }) 
+                })
 
     def get_account_history(self, accountId, startAt, endAt, pageSize= 100, currentPage = 1):
         """
-            List account activity. Account activity either increases or decreases 
-            your account balance. Items are paginated and sorted latest first. 
+            List account activity. Account activity either increases or decreases
+            your account balance. Items are paginated and sorted latest first.
             See the Pagination section for retrieving additional entries after the first page.
             GET /api/v1/accounts/<accountId>/ledgers
             {'totalNum': 1,
@@ -434,26 +446,26 @@ class KucoinV2:
                        'currency': 'BTC',
                        'direction': 'in'}]}
         """
-        return self.trading_api_request('get', 
+        return self.trading_api_request('get',
                                         '/api/v1/accounts/{}/ledgers?startAt={}&endAt={}&pageSize={}&currentPage={}'.format(
                                                 accountId, startAt, endAt, pageSize, currentPage
                                             ))
-            
+
     def get_account_holds(self, accountId):
         """
-            Holds are placed on an account for any active orders or pending 
-            withdraw requests. As an order is filled, the hold amount is updated. 
-            If an order is canceled, any remaining hold is removed. For a withdraw, 
+            Holds are placed on an account for any active orders or pending
+            withdraw requests. As an order is filled, the hold amount is updated.
+            If an order is canceled, any remaining hold is removed. For a withdraw,
             once it is completed, the hold is removed.
             GET /api/v1/accounts/<accountId>/holds
         """
         return self.trading_api_request('get', '/api/v1/accounts/' + accountId + '/holds')
-    
+
     def post_inner_transfer(self, clientOid, payAccountId, recAccountId, amount):
         """
-            The inner transfer interface is used for assets transfer among the 
-            accounts of a user and is free of charges on the platform. For example, 
-            a user could transfer assets for free form the main account to the 
+            The inner transfer interface is used for assets transfer among the
+            accounts of a user and is free of charges on the platform. For example,
+            a user could transfer assets for free form the main account to the
             trading account on the platform.
             POST /api/v1/accounts/inner-transfer
         """
@@ -463,15 +475,15 @@ class KucoinV2:
                     'recAccountId': recAccountId,
                     'amount': amount,
                 })
-                
+
     def post_new_order(self, side, symbol, price, size, timeInForce, order_type = 'limit'):
         """
-            You can place two types of orders: limit and market. Orders can only 
-            be placed if your account has sufficient funds. Once an order is placed, 
-            your account funds will be put on hold for the duration of the order. 
-            How much and which funds are put on hold depends on the order type 
-            and parameters specified. See the Holds details below. The maximum 
-            matching orders for a single trading pair in one account is 50 
+            You can place two types of orders: limit and market. Orders can only
+            be placed if your account has sufficient funds. Once an order is placed,
+            your account funds will be put on hold for the duration of the order.
+            How much and which funds are put on hold depends on the order type
+            and parameters specified. See the Holds details below. The maximum
+            matching orders for a single trading pair in one account is 50
             (stop limit order included).
             POST /api/v1/orders
             Param	type	Description
