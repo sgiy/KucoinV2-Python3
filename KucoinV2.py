@@ -369,6 +369,13 @@ class KucoinV2:
         """
         return self.get_request('/api/v1/timestamp')
 
+    def get_all_tickers(self):
+        """
+            Get all tickers
+            Debug: ct['Kucoin'].get_all_tickers()
+        """
+        return self.get_request('/api/v1/market/allTickers')
+
     #########################################
     ### Exchange specific private methods ###
     #########################################
