@@ -100,18 +100,7 @@ class KucoinV2:
     ### Exchange specific public methods ###
     ########################################
 
-    def get_market_list(self):
-        """
-            Get base currencies.
-            GET /api/v1/markets
-            [
-                "BTC",
-                "ETH",
-                "USDT"
-            ]
-        """
-        return self.get_request('/api/v1/markets')
-
+    ### Symbols & Ticker
     def get_symbols(self):
         """
             Get a list of available currency pairs for trading.
@@ -158,6 +147,41 @@ class KucoinV2:
         """
         return self.get_request('/api/v1/market/orderbook/level1?symbol=' + symbol)
 
+    def get_all_tickers(self):
+        """
+            Get all tickers
+            Debug: ct['Kucoin'].get_all_tickers()
+        """
+        return self.get_request('/api/v1/market/allTickers')
+
+    def get_24hr_stats(self, symbol):
+        """
+            Get 24 hr stats for the symbol. volume is in base currency units.
+            open, high, low are in quote currency units.
+            GET /api/v1/market/stats
+            {'symbol': 'KCS-BTC',
+             'high': '0.5',
+             'vol': '23207.79102607',
+             'low': '0.00009',
+             'changePrice': '-0.00001',
+             'changeRate': '-0.0769',
+             'volValue': '2.95767623942'}
+        """
+        return self.get_request('/api/v1/market/stats/' + symbol)
+
+    def get_market_list(self):
+        """
+            Get base currencies.
+            GET /api/v1/markets
+            [
+                "BTC",
+                "ETH",
+                "USDT"
+            ]
+        """
+        return self.get_request('/api/v1/markets')
+
+    ### Order Book
     def get_part_order_book_agg(self, symbol):
         """
             Get a list of open orders for a symbol.
@@ -233,6 +257,7 @@ class KucoinV2:
         """
         return self.get_request('/api/v1/market/orderbook/level3?symbol=' + symbol)
 
+    ### Histories
     def get_trade_histories(self, symbol):
         """
             List the latest trades for a symbol.
@@ -265,7 +290,7 @@ class KucoinV2:
         """
         return self.get_request('/api/v1/market/histories?symbol=' + symbol)
 
-    def get_historic_rates(self, symbol, startAt, endAt, pattern_type='5min'):
+    def get_klines(self, symbol, startAt, endAt, pattern_type='5min'):
         """
             Historic rates for a symbol. Rates are returned in grouped buckets
             based on requested type.
@@ -320,21 +345,7 @@ class KucoinV2:
         """
         return self.get_request('/api/v1/market/candles?symbol={0}&begin={1}&end={2}&type={3}'.format(symbol, startAt, endAt, pattern_type))
 
-    def get_24hr_stats(self, symbol):
-        """
-            Get 24 hr stats for the symbol. volume is in base currency units.
-            open, high, low are in quote currency units.
-            GET /api/v1/market/stats
-            {'symbol': 'KCS-BTC',
-             'high': '0.5',
-             'vol': '23207.79102607',
-             'low': '0.00009',
-             'changePrice': '-0.00001',
-             'changeRate': '-0.0769',
-             'volValue': '2.95767623942'}
-        """
-        return self.get_request('/api/v1/market/stats/' + symbol)
-
+    ### Currencies
     def get_currencies(self):
         """
             List known currencies.
@@ -361,6 +372,22 @@ class KucoinV2:
         """
         return self.get_request('/api/v1/currencies/' + currency)
 
+    def get_fiat_prices(self, base = 'USD'):
+        """
+            Get currency fiat prices
+            GET /api/v1/prices
+            base [optional] Enter the three-letter fiat of your preferred base
+                currency,eg.USD,EUR. Default is USD
+            {
+                "BTC": "3911.28000000",
+                "ETH": "144.55492453",
+                "LTC": "48.45888179",
+                "KCS": "0.45546856"
+            }
+        """
+        return self.get_request('/api/v1/prices?base={}'.format(base))
+
+    ### Others
     def get_time(self):
         """
             Get the API server time.
@@ -369,17 +396,13 @@ class KucoinV2:
         """
         return self.get_request('/api/v1/timestamp')
 
-    def get_all_tickers(self):
-        """
-            Get all tickers
-            Debug: ct['Kucoin'].get_all_tickers()
-        """
-        return self.get_request('/api/v1/market/allTickers')
+
 
     #########################################
     ### Exchange specific private methods ###
     #########################################
 
+    ### Accounts
     def get_accounts(self, currency = None, account_type = None):
         """
             Get a list of accounts.
@@ -483,6 +506,11 @@ class KucoinV2:
                     'amount': amount,
                 })
 
+    ### Deposits
+
+    ### Withdrawals
+
+    ### Orders
     def post_new_order(self, side, symbol, price, size, timeInForce, order_type = 'limit'):
         """
             You can place two types of orders: limit and market. Orders can only
@@ -530,3 +558,44 @@ class KucoinV2:
         if timeInForce is not None:
             request['timeInForce'] = timeInForce
         return self.trading_api_request('post', '/api/v1/orders', request)
+
+    def cancel_order(self, clientOid):
+        """
+            Cancel a previously placed order.
+
+            You would receive the request return once the system has received
+            the cancellation request. The cancellation request will be processed
+            by matching engine in sequence. To know if the request is processed
+            (success or not), you may check the order status or update message
+            from the pushes.
+        """
+        request = {
+                    'clientOid': clientOid
+                }
+        return self.trading_api_request('delete', '/api/v1/orders', request)
+
+    def cancel_all_orders(self):
+        """
+            With best effort, cancel all open orders. The response is a list of
+            ids of the canceled orders.
+        """
+        return self.trading_api_request('delete', '/api/v1/orders')
+
+    def get_orders(self, request = {}):
+        """
+            List your current orders.
+
+            Param	Type	Description
+            status	string	[optional] active or done, done as default, Only 
+                list orders for a specific status .
+            symbol	string	[optional] Only list orders for a specific symbol.
+            side	string	[optional] buy or sell
+            type	string	[optional] limit, market, limit_stop or market_stop
+            startAt	long	[optional] Start time. Unix timestamp calculated in
+                milliseconds, the creation time queried shall posterior to the
+                start time.
+            endAt	long	[optional] End time. Unix timestamp calculated in
+                milliseconds, the creation time queried shall prior to the end
+                time.
+        """
+        return self.trading_api_request('get', '/api/v1/orders', request)
